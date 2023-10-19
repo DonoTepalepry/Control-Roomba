@@ -43,6 +43,7 @@ String command = "";
 PS2X ps2x;
 
 int error = 0; 
+bool pwr = false;
 byte type = 0;
 byte vibrate = 0;
 
@@ -64,9 +65,9 @@ void setup(){
 
   // set the data rate for the SoftwareSerial port
 
-  mySerial.begin(115200); //Softserial works at 19200!!
-  ptr=0;  //Pointer in InBuf as needed
-  cnt=0;  //counter when needed
+  mySerial.begin(115200);
+  ptr=0;
+  cnt=0;
   t1=millis();  //T1 to keep track of time intervals
 
   receiver.enableIRIn();
@@ -265,12 +266,54 @@ if(error == 1) //skip loop if no controller found
     if(ps2x.Button(PSB_L1))
     {
       Serial.write("L1? \n");
-      // rotate turret left
     } 
     else if(ps2x.Button(PSB_R1))
     { 
       Serial.write("R1? \n");
-      // rotate turret right
+    }
+    else if (ps2x.Button(PSB_PAD_UP))
+    {
+      Serial.write("Forward \n");
+      mySerial.write(Rfwd,6);
+    }
+    else if (ps2x.Button(PSB_PAD_DOWN))
+    {
+      Serial.write("Backward \n");
+      mySerial.write(Rback,6);
+    }
+    else if (ps2x.Button(PSB_PAD_LEFT))
+    {
+      Serial.write("Left \n");
+      TurnLeft();
+    }
+    else if (ps2x.Button(PSB_PAD_RIGHT))
+    {
+      Serial.write("Right \n");
+      TurnRight();
+    }
+    else if ((ps2x.Button(PSB_SELECT)) and (pwr == false))
+    {
+      mySerial.write(128);
+      delay(20);
+      mySerial.write(132); //full
+      delay(20);  
+      Serial.println("Roomba Initialized (start, command)");
+      mySerial.write(Lighton,4);
+      mySerial.write(Song1,35);
+      delay(1000);
+      pwr = true;
+    }
+    else if ((ps2x.Button(PSB_SELECT)) and (pwr == true))
+    {
+      mySerial.write(RoombaOff);
+      Serial.write("off");
+      delay(1000);
+      pwr = false;
+    }
+    else if (ps2x.Button(PSB_CROSS))
+    {
+      Serial.println("X");
+      mySerial.write(Rstop,6);
     }
     else 
     {
