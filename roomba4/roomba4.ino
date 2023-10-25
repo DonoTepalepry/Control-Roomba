@@ -104,155 +104,17 @@ void setup(){
 void loop() // run over and over
 
 {
-  if (receiver.decode(&results)) {            //  Decode the button code and put it in "results" variable mySerial.write(Rstop,6); mySerial.write(Rfwd,6); 
-    
-    if (results.value == 0x3E0C7005) {
-        Serial.println("Forward");
-          mySerial.write(Rfwd,6);
-      }
-    if (results.value == 0xED8C15AD) {
-        Serial.println("Right");
-        TurnRight();
-      }
-    if (results.value == 0xA07CF2DB) {
-        Serial.println("Left");
-        TurnLeft();
-      }
-    if (results.value == 0x9DF14DB3) {
-        Serial.println("Back");
-        mySerial.write(Rback,6);
-      }
-    if (results.value == 0xE4F74E5A){   //stop (enter button)
-        mySerial.write(Rstop,6);
-    }
-    if (results.value == 0x6322900E){   //Power-off (power button)
-        mySerial.write(RoombaOff);
-    }
-    if (results.value == 0xEA2EE974){   //Initialize (input button)
-      mySerial.write(128);
-      delay(20);
-      mySerial.write(132); //full
-      delay(20);  
-      Serial.println("Roomba Initialized (start, command)");
-      mySerial.write(Lighton,4);
-      mySerial.write(Song1,35);
-    }
-      receiver.resume();
-    }
-
+  //oldcmd();   // also not needed
+  //oldIR();   //not needed anymore but i dont want to delete it
+  
   if (mySerial.available())  //First order of business: listen to Roomba
     Serial.write(mySerial.read());   //writes to USB input from soft serial
 
   t2=millis()-t1;  //T2 is time since last t1 reset
 
-  if (play){
-    mySerial.write(RoombaPlay,2);
-    delay(3000);
-   }
-
   if (Serial.available()){  //check for command from computer USB
-  cmd = Serial.read();  //get the character
-
-  switch (cmd)  {
-    case ')':
-      CircleRight();
-      Serial.println("circle to the right");
-    break;
-
-    case '(':
-      CircleLeft();
-      Serial.println("circle to the right");
-    break;
-
-    case ' ':  //space to stop all motors
-       StopIt();
-    break;
-
-    case '\I':  // Send start and command initialization
-      mySerial.write(128);  //start (goes to Passive)
-      delay(20);  //delay 20 milliseconds after state change
-      mySerial.write(132);  //Command mode - goes to full (131 for safe)
-      delay(20);  //delay 20 milliseconds after state change
-      mySerial.write(Lighton,4);
-      Serial.println("Roomba Initialized (start, command)"); 
-    break;
-
-    //-----------switching LEDs
-
-    case 's': //turn on spot LED
-      Serial.println("s done"); 
-      mySerial.write(RoombaOff);  //Not the right commands
-    break;
-
-    case '\d': // turn on dirt LED
-        Serial.println("d done"); 
-      mySerial.write(RoombaOff); //Not the right commands
-    break;  
-
-    //---------------- Motors & virtual buttons
-
-    case '\C': //turn on clean Operation (turn off alt motors)
-      mySerial.write(135); //start clean operation
-      mySerial.write(RoombaMotorsOff,2);  //This does NOT work - once you start "Clean" mode, it ignores you
-      play=true;                          //It is possible that it would work if you reset to SAFE mode.
-      Serial.println("Clean, no brushes done");
-    break;   
-
-//---------------------------
-
-    case '\P':  // send power down
-      Serial.println("P done"); 
-      mySerial.write(RoombaOff);
-    break;
-
-      case '\m':  // send music initialization our roomba can only do 4 songs
-      //mySerial.write(Song0,17);
-      mySerial.write(Song1,35);
-      mySerial.write(Song9,33);
-      mySerial.write(Song2,13);
-      mySerial.write(Song3,13);
-     // mySerial.write(Song15,11);
-      Serial.println("Songs Set"); 
-    break;
-
-    case 'M':   //send Music play
-      Serial.println("M done"); 
-      mySerial.write(RoombaPlay,2);  //Play
-    break;
-
-    case 'R':   //Turn Right  
-       TurnRight();
-    break;
-
-    case 'L':   //Turn left
-       TurnLeft();
-    break;
-
-    case 'F':   //Turn left
-       Go(2);
-    break;
-
-    case 'B':   //Turn left
-       Back(2);
-    break;
-
-    case '8':   //Figure 8
-       Fig8();
-       Serial.println("so much for 8");
-    break;
-
-    default: 
-      if ((cmd<'0') || (cmd>'9'))
-       { Serial.print("Not recognized: "); 
-       Serial.println(cmd, DEC);  //this give you the ASCII decimal value for the key
-       }
-       {
-        mySerial.write(141);
-        mySerial.write(cmd-48); 
-        Serial.print("Playing Song :"); 
-        Serial.println(cmd-48);
-       };
-  }}
+    cmd = Serial.read();  //get the character
+  }
 
 //ps2 time
 
@@ -260,64 +122,62 @@ if(error == 1) //skip loop if no controller found
     return; 
 
   else { //DualShock Controller
-
     ps2x.read_gamepad(false, vibrate);          //read controller and set large motor to spin at 'vibrate' speed
 
-    if(ps2x.Button(PSB_L1))
-    {
-      Serial.write("L1? \n");
-    } 
-    else if(ps2x.Button(PSB_R1))
-    { 
-      Serial.write("R1? \n");
-    }
-    else if (ps2x.Button(PSB_PAD_UP))
-    {
-      Serial.write("Forward \n");
-      mySerial.write(Rfwd,6);
-    }
-    else if (ps2x.Button(PSB_PAD_DOWN))
-    {
-      Serial.write("Backward \n");
-      mySerial.write(Rback,6);
-    }
-    else if (ps2x.Button(PSB_PAD_LEFT))
-    {
-      Serial.write("Left \n");
-      TurnLeft();
-    }
-    else if (ps2x.Button(PSB_PAD_RIGHT))
-    {
-      Serial.write("Right \n");
-      TurnRight();
-    }
-    else if ((ps2x.Button(PSB_SELECT)) and (pwr == false))
-    {
-      mySerial.write(128);
-      delay(20);
-      mySerial.write(132); //full
-      delay(20);  
-      Serial.println("Roomba Initialized (start, command)");
-      mySerial.write(Lighton,4);
-      mySerial.write(Song1,35);
-      delay(1000);
-      pwr = true;
-    }
-    else if ((ps2x.Button(PSB_SELECT)) and (pwr == true))
-    {
-      mySerial.write(RoombaOff);
-      Serial.write("off");
-      delay(1000);
-      pwr = false;
-    }
-    else if (ps2x.Button(PSB_CROSS))
-    {
-      Serial.println("X");
+    if ((ps2x.Button(PSB_SELECT)) and (pwr == false)){
+        mySerial.write(128);
+        delay(20);
+        mySerial.write(132); //full
+        delay(20);  
+        Serial.println("Roomba Initialized (start, command)");
+        mySerial.write(Lighton,4);
+        mySerial.write(Song1,35);
+        delay(1000);
+        pwr = true;
+      }
+      else if ((ps2x.Button(PSB_SELECT)) and (pwr == true))
+      {
+        mySerial.write(RoombaOff);
+        Serial.write("off");
+        delay(1000);
+        pwr = false;
+      }
+    if (ps2x.Button(PSB_R1)){
+      // if(ps2x.Button(PSB_L1))
+      // {
+      //   Serial.write("L1? \n");
+      // } 
+      if (ps2x.Button(PSB_PAD_UP))
+      {
+        Serial.write("Forward \n");
+        mySerial.write(Rfwd,6);
+      }
+      else if (ps2x.Button(PSB_PAD_DOWN))
+      {
+        Serial.write("Backward \n");
+        mySerial.write(Rback,6);
+      }
+      else if (ps2x.Button(PSB_PAD_LEFT))
+      {
+        Serial.write("Left \n");
+        TurnLeft();
+      }
+      else if (ps2x.Button(PSB_PAD_RIGHT))
+      {
+        Serial.write("Right \n");
+        TurnRight();
+      }
+      else if (ps2x.Button(PSB_CROSS))
+      {
+        Serial.println("X");
+        mySerial.write(Rstop,6);
+      }
+      else 
+      {
+        // do nothing
+      }
+    }else{
       mySerial.write(Rstop,6);
-    }
-    else 
-    {
-      // do nothing
     }
 
     if(ps2x.Analog(PSS_LY) >= 136 && ps2x.Analog(PSS_LY) <= 255)//real center value is 128, but 140 is needed because controller is HIGHLY sensitive
