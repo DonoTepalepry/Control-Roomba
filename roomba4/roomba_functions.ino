@@ -12,10 +12,10 @@ void TurnLeft(){
        //mySerial.write(Rstop,6);
 }
 
-void Go(int seconds){  //Go forward for some number of seconds
+void Go(int seconds){
        mySerial.write(Rfwd,6);
        Serial.println("going forward");
-       delay(seconds*500);  //beware: using delay means that "space" won't stop it!
+       delay(seconds*500);
        mySerial.write(Rstop,6);
 }
 
@@ -36,7 +36,7 @@ void Fig8(){
  CircleRight();
  PlayIt(3);
  delay(t8);
- Go(1);   //=====================
+ Go(1);
  TurnRight();
  PlayIt(9);
  CircleLeft();
@@ -94,15 +94,15 @@ void oldcmd(){
       Serial.println("circle to the right");
     break;
 
-    case ' ':  //space to stop all motors
+    case ' ':
        StopIt();
     break;
 
-    case '\I':  // Send start and command initialization
+    case '\I':
       mySerial.write(128);  //start (goes to Passive)
-      delay(20);  //delay 20 milliseconds after state change
-      mySerial.write(132);  //Command mode - goes to full (131 for safe)
-      delay(20);  //delay 20 milliseconds after state change
+      delay(20);
+      mySerial.write(132);  //full (131 for safe)
+      delay(20);
       mySerial.write(Lighton,4);
       Serial.println("Roomba Initialized (start, command)"); 
     break;
@@ -123,8 +123,8 @@ void oldcmd(){
 
     case '\C': //turn on clean Operation (turn off alt motors)
       mySerial.write(135); //start clean operation
-      mySerial.write(RoombaMotorsOff,2);  //This does NOT work - once you start "Clean" mode, it ignores you
-      play=true;                          //It is possible that it would work if you reset to SAFE mode.
+      mySerial.write(RoombaMotorsOff,2);
+      play=true;
       Serial.println("Clean, no brushes done");
     break;   
 

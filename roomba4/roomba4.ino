@@ -20,6 +20,7 @@ byte Song3[13]={140,3,5,69,48,71,48,67,48,55,48,62,64}; //Strange Encounters 2
 byte Song15[11]={140,15,4,33,16,45,20,43,12,31,40};
 byte RoombaPlay[2] = {141,1};  //songs on 0,1,3 not sure why there isnt anything on 2
 byte RoombaMotorsOff[2] = {138,0};  //motors off code (brushes, vac)
+byte Battery[3] = {148,1,25};
 byte RoombaOff = 133;
 byte zero = 0;
 
@@ -35,9 +36,6 @@ byte Lighton[4]={139,0,255,255};
 int RECV_PIN = 2;          //  The digital pin that the signal pin of the sensor is connected to
 IRrecv receiver(RECV_PIN);  //  Create a new receiver object that would decode signals to key codes
 decode_results results;     //  A varuable that would be used by receiver to put the key code into
-
-SoftwareSerial BT (10, 11); // RX, TX
-String command = "";
 
 //ps2 controller
 PS2X ps2x;
@@ -61,14 +59,14 @@ void setup(){
   // Open serial communications and wait for port to open:
 
   Serial.begin(115200);
-  Serial.println("Menu 1");  //tell monitor we are alive
+  Serial.println("Menu 1");
 
   // set the data rate for the SoftwareSerial port
 
   mySerial.begin(115200);
   ptr=0;
   cnt=0;
-  t1=millis();  //T1 to keep track of time intervals
+  t1=millis();
 
   receiver.enableIRIn();
 
@@ -101,20 +99,21 @@ void setup(){
 
 // Main Loop ======================================================
 
-void loop() // run over and over
+void loop()
 
 {
   //oldcmd();   // also not needed
   //oldIR();   //not needed anymore but i dont want to delete it
   
-  if (mySerial.available())  //First order of business: listen to Roomba
-    Serial.write(mySerial.read());   //writes to USB input from soft serial
+  if (mySerial.available())
+    Serial.write(mySerial.read());
 
   t2=millis()-t1;  //T2 is time since last t1 reset
 
-  if (Serial.available()){  //check for command from computer USB
-    cmd = Serial.read();  //get the character
+  if (Serial.available()){
+    cmd = Serial.read();
   }
+
 
 //ps2 time
 
@@ -122,14 +121,14 @@ if(error == 1) //skip loop if no controller found
     return; 
 
   else { //DualShock Controller
-    ps2x.read_gamepad(false, vibrate);          //read controller and set large motor to spin at 'vibrate' speed
+    ps2x.read_gamepad(false, vibrate);
 
     if ((ps2x.Button(PSB_SELECT)) and (pwr == false)){
         mySerial.write(128);
         delay(20);
         mySerial.write(132); //full
         delay(20);  
-        Serial.println("Roomba Initialized (start, command)");
+        Serial.println("Roomba Initialized");
         mySerial.write(Lighton,4);
         mySerial.write(Song1,35);
         delay(1000);
@@ -143,10 +142,6 @@ if(error == 1) //skip loop if no controller found
         pwr = false;
       }
     if (ps2x.Button(PSB_R1)){
-      // if(ps2x.Button(PSB_L1))
-      // {
-      //   Serial.write("L1? \n");
-      // } 
       if (ps2x.Button(PSB_PAD_UP))
       {
         Serial.write("Forward \n");
